@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>FruitBill — Blox Fruits Calculator</title>
+  <meta name="theme-color" content="#0a0e17" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --surface: #131a29;
+      --surface-variant: #1e283c;
+      --border: #28364f;
+      --cyan: #00e5ff;
+      --purple: #a855f7;
+      --amber: #fbbf24;
+      --green: #10b981;
+      --red: #ff3366;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 180px; min-height: 100vh; }
+    
+    /* Header */
+    header { background: var(--surface); padding: 12px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .customer-title { font-size: 18px; font-weight: 900; color: var(--cyan); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .customer-title span { font-size: 14px; color: var(--text-muted); }
+    .btn-icon { background: var(--surface-variant); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    
+    /* Mode & Tier Tabs */
+    .tabs-row { display: flex; gap: 6px; background: var(--surface-variant); padding: 3px; border-radius: 8px; margin-bottom: 8px; }
+    .tab-btn { flex: 1; padding: 7px 0; border: none; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; background: transparent; color: var(--text-muted); }
+    .tab-btn.active.buying { background: var(--cyan); color: #000; }
+    .tab-btn.active.selling { background: var(--purple); color: #fff; }
+
+    .tier-row { display: flex; gap: 6px; margin-bottom: 8px; }
+    .tier-btn { flex: 1; padding: 6px 0; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-variant); color: var(--text-muted); font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; }
+    .tier-btn.active { border-color: var(--cyan); background: rgba(0, 229, 255, 0.15); color: var(--cyan); }
+    .tier-btn.active.offer { border-color: var(--green); background: rgba(16, 185, 129, 0.15); color: var(--green); }
+    .tier-btn.active.max { border-color: var(--amber); background: rgba(251, 191, 36, 0.15); color: var(--amber); }
+
+    /* Search & Filter */
+    .search-row { display: flex; gap: 8px; }
+    .search-input { flex: 1; background: var(--surface-variant); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; color: #fff; font-size: 13px; outline: none; }
+    .filter-btn { padding: 8px 12px; background: var(--surface-variant); border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+    .filter-btn.active { background: var(--cyan); color: #000; border-color: var(--cyan); }
+
+    /* Quote Card */
+    .quote-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; margin: 12px 14px 6px; }
+    .quote-header { font-size: 10px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .quote-tiers { display: flex; gap: 6px; }
+    .quote-pill { flex: 1; background: var(--surface-variant); border: 1px solid var(--border); border-radius: 8px; padding: 6px 4px; text-align: center; cursor: pointer; }
+    .quote-pill.active { border-color: var(--cyan); background: rgba(0, 229, 255, 0.1); }
+    .quote-pill-name { font-size: 10px; color: var(--text-muted); }
+    .quote-pill-val { font-size: 13px; font-weight: 800; color: #fff; margin-top: 2px; }
+
+    /* Fruit List */
+    .fruit-list { padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .fruit-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; transition: all 0.2s; }
+    .fruit-card.selected { border-color: var(--cyan); background: #131f33; }
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .fruit-name { font-size: 15px; font-weight: bold; color: var(--text); }
+    .fruit-prices { display: flex; gap: 8px; font-size: 12px; margin-top: 2px; }
+    .fruit-sell { color: var(--text-muted); }
+    .fruit-buy { color: var(--green); font-weight: bold; }
+    .line-total { font-size: 15px; font-weight: 900; color: var(--amber); }
+
+    /* Stepper Controls */
+    .card-controls { display: flex; justify-content: space-between; align-items: center; }
+    .stepper { display: flex; align-items: center; background: var(--surface-variant); border-radius: 8px; padding: 2px 4px; }
+    .stepper button { width: 32px; height: 32px; background: none; border: none; color: var(--cyan); font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .stepper button:disabled { color: var(--text-muted); opacity: 0.3; }
+    .stepper-val { min-width: 34px; text-align: center; font-size: 15px; font-weight: bold; color: #fff; cursor: pointer; }
+    
+    .chips { display: flex; gap: 5px; }
+    .chip { padding: 6px 10px; background: var(--surface-variant); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; font-weight: bold; color: var(--text-muted); cursor: pointer; }
+    .chip:active { background: var(--cyan); color: #000; }
+
+    /* Sticky Footer */
+    footer { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 12px 16px; box-shadow: 0 -4px 16px rgba(0,0,0,0.4); }
+    .footer-stats { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; color: var(--text-muted); }
+    .footer-profit { color: var(--green); font-weight: bold; }
+    .footer-totals { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .tot-items-lbl { font-size: 10px; font-weight: bold; color: var(--text-muted); }
+    .tot-items-num { font-size: 24px; font-weight: 900; color: var(--cyan); }
+    .tot-pay-lbl { font-size: 10px; font-weight: bold; color: var(--text-muted); text-align: right; }
+    .tot-pay-num { font-size: 26px; font-weight: 900; color: var(--red); text-align: right; }
+    
+    .footer-actions { display: flex; gap: 8px; }
+    .btn-main { flex: 1.4; padding: 10px 0; background: var(--cyan); border: none; border-radius: 8px; color: #000; font-size: 13px; font-weight: bold; cursor: pointer; text-align: center; }
+    .btn-sub { flex: 1; padding: 10px 0; background: var(--surface-variant); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; font-weight: bold; cursor: pointer; }
+    .btn-reset { width: 42px; background: var(--surface-variant); border: 1px solid var(--border); border-radius: 8px; color: var(--red); font-size: 14px; cursor: pointer; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 400px; padding: 18px; }
+    .modal h3 { font-size: 16px; color: var(--cyan); margin-bottom: 10px; }
+    .modal textarea { width: 100%; height: 110px; background: var(--surface-variant); border: 1px solid var(--border); border-radius: 8px; color: #fff; padding: 10px; font-size: 12px; margin-bottom: 12px; outline: none; }
+    .modal-btns { display: flex; justify-content: flex-end; gap: 8px; }
+    .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: var(--cyan); color: #000; font-weight: bold; font-size: 12px; padding: 8px 16px; border-radius: 20px; display: none; z-index: 300; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-top">
+      <div class="customer-title" onclick="editCustomerName()">
+        <span id="cust-name">Billy</span> ✏️
+      </div>
+      <div>
+        <button class="btn-icon" onclick="openSmartPaste()">Smart Paste</button>
+      </div>
+    </div>
+
+    <!-- Mode Selector -->
+    <div class="tabs-row">
+      <button class="tab-btn active buying" id="tab-buy" onclick="setMode('BUYING')">BUYING (12–18% Profit)</button>
+      <button class="tab-btn" id="tab-sell" onclick="setMode('SELLING')">SELLING (Ad Prices)</button>
+    </div>
+
+    <!-- Tier Selector -->
+    <div class="tier-row" id="tier-container">
+      <button class="tier-btn offer" onclick="setTier(0.18, this)">Offer (18%)</button>
+      <button class="tier-btn active" onclick="setTier(0.15, this)">Target (15%)</button>
+      <button class="tier-btn max" onclick="setTier(0.12, this)">Max (12%)</button>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="search-row">
+      <input type="text" id="search-input" class="search-input" placeholder="Search 22 fruits (e.g. 'kitsune', 'gl')..." oninput="renderFruits()" />
+      <button class="filter-btn" id="filter-btn" onclick="toggleFilterSelected()">In Bill (<span id="in-bill-count">0</span>)</button>
+    </div>
+  </header>
+
+  <!-- Quote Card -->
+  <div class="quote-card" id="quote-card">
+    <div class="quote-header">
+      <span>Quote Tiers (Tap to apply)</span>
+      <span>12–18% Profit Rule</span>
+    </div>
+    <div class="quote-tiers">
+      <div class="quote-pill" id="quote-pill-18" onclick="setTier(0.18)">
+        <div class="quote-pill-name">Offer (18%)</div>
+        <div class="quote-pill-val" id="q-18">$0.00</div>
+      </div>
+      <div class="quote-pill active" id="quote-pill-15" onclick="setTier(0.15)">
+        <div class="quote-pill-name">Target (15%)</div>
+        <div class="quote-pill-val" id="q-15">$0.00</div>
+      </div>
+      <div class="quote-pill" id="quote-pill-12" onclick="setTier(0.12)">
+        <div class="quote-pill-name">Max (12%)</div>
+        <div class="quote-pill-val" id="q-12">$0.00</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fruits List -->
+  <div class="fruit-list" id="fruit-list"></div>
+
+  <!-- Sticky Footer -->
+  <footer>
+    <div class="footer-stats" id="footer-stats">
+      <span>Sell: <b id="stat-sell">$0.00</b></span>
+      <span>Profit: <b class="footer-profit" id="stat-profit">$0.00 (0%)</b></span>
+    </div>
+
+    <div class="footer-totals">
+      <div>
+        <div class="tot-items-lbl">TOTAL FRUITS</div>
+        <div class="tot-items-num" id="tot-items">0</div>
+      </div>
+      <div>
+        <div class="tot-pay-lbl" id="tot-pay-lbl">TOTAL PAYMENT (BUY)</div>
+        <div class="tot-pay-num" id="tot-pay">$0.00</div>
+      </div>
+    </div>
+
+    <div class="footer-actions">
+      <button class="btn-main" onclick="copyDiscord()">📋 Copy Discord Bill</button>
+      <button class="btn-sub" onclick="resetAll()">Reset</button>
+    </div>
+  </footer>
+
+  <!-- Smart Paste Modal -->
+  <div class="modal-overlay" id="modal-paste">
+    <div class="modal">
+      <h3>Smart Paste Message</h3>
+      <textarea id="paste-text" placeholder="Paste customer message or list:&#10;4 Kitsune&#10;2 Magnet&#10;1 Werewolf"></textarea>
+      <div class="modal-btns">
+        <button class="btn-sub" onclick="closeSmartPaste()">Cancel</button>
+        <button class="btn-main" onclick="applySmartPaste()">Add to Bill</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Copied!</div>
+
+  <script>
+    // Exact 22 user-specified fruits and selling prices
+    const FRUITS = [
+      { id: "galaxy_kitsune", name: "Galaxy Kitsune", sell: 34.0, aliases: ["gek", "galaxy kit"] },
+      { id: "crimson_kitsune", name: "Crimson Empyrean Kitsune", sell: 28.0, aliases: ["cek", "crimson"] },
+      { id: "ember_dragon", name: "Ember Dragon", sell: 25.0, aliases: ["ember"] },
+      { id: "meme", name: "Meme", sell: 25.0, aliases: ["meme fruit"] },
+      { id: "purple_lightning", name: "Purple Lightning", sell: 19.5, aliases: ["pl"] },
+      { id: "west_dragon", name: "West Dragon", sell: 13.0, aliases: ["wd", "dragon west"] },
+      { id: "super_spirit_pain", name: "Super Spirit Pain", sell: 11.5, aliases: ["ssp"] },
+      { id: "east_dragon", name: "East Dragon", sell: 11.0, aliases: ["ed", "dragon east"] },
+      { id: "divine_portal", name: "Divine Portal", sell: 11.0, aliases: ["dp", "divine"] },
+      { id: "arcsteel_magnet", name: "Arcsteel Magnet", sell: 10.0, aliases: ["am"] },
+      { id: "red_lightning", name: "Red Lightning", sell: 10.0, aliases: ["rl"] },
+      { id: "runic_fiend", name: "Runic Fiend", sell: 7.0, aliases: ["rf"] },
+      { id: "dog_blade", name: "Dog Blade", sell: 7.0, aliases: ["db"] },
+      { id: "werewolf", name: "Werewolf", sell: 5.2, aliases: ["wolf"] },
+      { id: "fiend_yeti", name: "Fiend Yeti", sell: 5.2, aliases: ["fiend"] },
+      { id: "celestial_pain", name: "Celestial Pain", sell: 3.2, aliases: ["cp"] },
+      { id: "sadness_pain", name: "Sadness Pain", sell: 3.0, aliases: ["sp"] },
+      { id: "magnet", name: "Magnet", sell: 2.5, aliases: ["mag"] },
+      { id: "frustration_pain", name: "Frustration Pain", sell: 2.5, aliases: ["fp"] },
+      { id: "kitsune", name: "Kitsune", sell: 2.5, aliases: ["kit"] },
+      { id: "starlight_gravity", name: "Starlight Gravity", sell: 1.5, aliases: ["sg"] },
+      { id: "green_lightning", name: "Green Lightning", sell: 1.2, aliases: ["gl"] }
+    ];
+
+    let quantities = {};
+    let currentMode = "BUYING"; // "BUYING" or "SELLING"
+    let currentMargin = 0.15;   // 15% Target default
+    let filterSelectedOnly = false;
+    let customerName = "Billy";
+
+    function getBuyPrice(sellPrice, margin) {
+      return Math.round(sellPrice * (1 - margin) * 100) / 100;
+    }
+
+    function fmt(val) {
+      return "$" + val.toFixed(2);
+    }
+
+    function renderFruits() {
+      const search = document.getElementById("search-input").value.toLowerCase().trim();
+      const listEl = document.getElementById("fruit-list");
+      listEl.innerHTML = "";
+
+      let selectedCount = 0;
+
+      FRUITS.forEach(f => {
+        const qty = quantities[f.id] || 0;
+        if (qty > 0) selectedCount++;
+
+        const matchesSearch = !search ||
+          f.name.toLowerCase().includes(search) ||
+          f.aliases.some(a => a.includes(search)) ||
+          f.name.split(" ").map(w => w[0].toLowerCase()).join("").includes(search);
+
+        const matchesFilter = !filterSelectedOnly || qty > 0;
+
+        if (matchesSearch && matchesFilter) {
+          const buyPrice = getBuyPrice(f.sell, currentMargin);
+          const activePrice = currentMode === "BUYING" ? buyPrice : f.sell;
+          const lineTotal = qty * activePrice;
+
+          const card = document.createElement("div");
+          card.className = "fruit-card" + (qty > 0 ? " selected" : "");
+          card.innerHTML = `
+            <div class="card-top">
+              <div>
+                <div class="fruit-name">${f.name}</div>
+                <div class="fruit-prices">
+                  <span class="fruit-sell">Sell: ${fmt(f.sell)}</span>
+                  ${currentMode === "BUYING" ? `<span class="fruit-buy">Buy: ${fmt(buyPrice)} (${Math.round(currentMargin * 100)}%)</span>` : ""}
+                </div>
+              </div>
+              ${qty > 0 ? `<div class="line-total">${fmt(lineTotal)}</div>` : ""}
+            </div>
+            <div class="card-controls">
+              <div class="stepper">
+                <button onclick="changeQty('${f.id}', -1)" ${qty <= 0 ? "disabled" : ""}>−</button>
+                <div class="stepper-val" onclick="promptQty('${f.id}')">${qty}</div>
+                <button onclick="changeQty('${f.id}', 1)">+</button>
+              </div>
+              <div class="chips">
+                <div class="chip" onclick="changeQty('${f.id}', 1)">+1</div>
+                <div class="chip" onclick="changeQty('${f.id}', 2)">+2</div>
+                <div class="chip" onclick="changeQty('${f.id}', 5)">+5</div>
+              </div>
+            </div>
+          `;
+          listEl.appendChild(card);
+        }
+      });
+
+      document.getElementById("in-bill-count").innerText = selectedCount;
+      calculateSummary();
+    }
+
+    function calculateSummary() {
+      let totalItems = 0;
+      let totalPayment = 0;
+      let totalSell = 0;
+
+      let q18 = 0, q15 = 0, q12 = 0;
+
+      FRUITS.forEach(f => {
+        const qty = quantities[f.id] || 0;
+        if (qty > 0) {
+          totalItems += qty;
+          totalSell += qty * f.sell;
+          const buyPrice = getBuyPrice(f.sell, currentMargin);
+          totalPayment += qty * (currentMode === "BUYING" ? buyPrice : f.sell);
+
+          q18 += qty * getBuyPrice(f.sell, 0.18);
+          q15 += qty * getBuyPrice(f.sell, 0.15);
+          q12 += qty * getBuyPrice(f.sell, 0.12);
+        }
+      });
+
+      const profit = totalSell - totalPayment;
+      const profitPct = totalSell > 0 ? (profit / totalSell * 100) : 0;
+
+      document.getElementById("tot-items").innerText = totalItems;
+      document.getElementById("tot-pay").innerText = fmt(totalPayment);
+      document.getElementById("stat-sell").innerText = fmt(totalSell);
+      document.getElementById("stat-profit").innerText = `${fmt(profit)} (${profitPct.toFixed(1)}%)`;
+
+      document.getElementById("q-18").innerText = fmt(q18);
+      document.getElementById("q-15").innerText = fmt(q15);
+      document.getElementById("q-12").innerText = fmt(q12);
+    }
+
+    function changeQty(id, delta) {
+      quantities[id] = Math.max(0, (quantities[id] || 0) + delta);
+      renderFruits();
+    }
+
+    function promptQty(id) {
+      const current = quantities[id] || 0;
+      const input = prompt("Enter quantity for " + id.replace(/_/g, " "), current);
+      if (input !== null) {
+        const val = parseInt(input, 10);
+        if (!isNaN(val) && val >= 0) {
+          quantities[id] = val;
+          renderFruits();
+        }
+      }
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById("tab-buy").className = "tab-btn" + (mode === "BUYING" ? " active buying" : "");
+      document.getElementById("tab-sell").className = "tab-btn" + (mode === "SELLING" ? " active selling" : "");
+      document.getElementById("tier-container").style.display = mode === "BUYING" ? "flex" : "none";
+      document.getElementById("quote-card").style.display = mode === "BUYING" ? "block" : "none";
+      document.getElementById("tot-pay-lbl").innerText = mode === "BUYING" ? "TOTAL PAYMENT (BUY)" : "TOTAL PAYMENT (SELL)";
+      renderFruits();
+    }
+
+    function setTier(margin, btn) {
+      currentMargin = margin;
+      document.querySelectorAll(".tier-btn").forEach(b => b.classList.remove("active"));
+      if (btn) btn.classList.add("active");
+
+      document.getElementById("quote-pill-18").className = "quote-pill" + (margin === 0.18 ? " active" : "");
+      document.getElementById("quote-pill-15").className = "quote-pill" + (margin === 0.15 ? " active" : "");
+      document.getElementById("quote-pill-12").className = "quote-pill" + (margin === 0.12 ? " active" : "");
+
+      renderFruits();
+    }
+
+    function toggleFilterSelected() {
+      filterSelectedOnly = !filterSelectedOnly;
+      const btn = document.getElementById("filter-btn");
+      if (filterSelectedOnly) btn.classList.add("active"); else btn.classList.remove("active");
+      renderFruits();
+    }
+
+    function editCustomerName() {
+      const name = prompt("Enter Customer / Deal Name:", customerName);
+      if (name) {
+        customerName = name.trim();
+        do
